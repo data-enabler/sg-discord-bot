@@ -7,14 +7,13 @@ logging.basicConfig(level=logging.INFO)
 
 
 # Credentials
-discordEmail = input('Discord Email: ')
-discordPassword = getpass.getpass('Password: ')
+discordToken = open('token').readline().strip()
 
 
 # Constants
-SG_SERVER_ID = '93912070059196416'
-ASSIGNMENT_CHANNEL_ID = '233106056086159363'  # region-assignment
-# ASSIGNMENT_CHANNEL_ID = '257073315011624961'  # dev-test
+SERVER_ID = '93912070059196416'  # Skullgirls
+CHANNEL_ID = '233106056086159363'  # region-assignment
+# CHANNEL_ID = '257073315011624961'  # dev-test
 
 
 # Roles
@@ -40,13 +39,13 @@ discordClient = discord.Client()
 
 
 async def discord_task():
-    await discordClient.login(discordEmail, discordPassword)
+    await discordClient.login(discordToken, bot=True)
     await discordClient.connect()
 
 
 @discordClient.event
 async def on_message(message):
-    if message.channel.id != ASSIGNMENT_CHANNEL_ID:
+    if message.channel.id != CHANNEL_ID:
         return
     print('on_message:')
 
@@ -79,12 +78,20 @@ async def reassignRole(member, roleId, roleGroupIds):
 @discordClient.event
 async def on_ready():
     global rolesById
-    print('Discord: logged in as {0} ({1})'.format(
+
+    print('------')
+    print('User: {0} ({1})'.format(
         discordClient.user.name,
         discordClient.user.id))
+    print('Server: {0} ({1})'.format(
+        discordClient.get_server(SERVER_ID),
+        SERVER_ID))
+    print('Channel: {0} ({1})'.format(
+        discordClient.get_channel(CHANNEL_ID),
+        CHANNEL_ID))
     print('------')
 
-    rolesById = parseRoles(discordClient.get_server(SG_SERVER_ID))
+    rolesById = parseRoles(discordClient.get_server(SERVER_ID))
 
 
 def parseRoles(server):
