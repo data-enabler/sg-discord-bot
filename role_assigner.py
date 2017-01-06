@@ -1,5 +1,4 @@
 import discord
-import getpass
 import asyncio
 import logging
 
@@ -50,16 +49,21 @@ async def on_message(message):
     print('on_message:')
 
     text = message.content.lower()
+    foundKeyphrase = False
     print(text)
     for roleGroup in roleGroups:
         for keyphrase in roleGroup.keys():
             if text.find(keyphrase) > -1:
                 print('found:', keyphrase)
+                foundKeyphrase = True
                 await reassignRole(
                     message.author,
                     roleGroup[keyphrase],
                     roleGroup.values())
                 break
+
+    reaction = '✅' if foundKeyphrase else '❌'
+    await discordClient.add_reaction(message, reaction)
 
 
 async def reassignRole(member, roleId, roleGroupIds):
