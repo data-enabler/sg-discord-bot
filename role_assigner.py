@@ -18,17 +18,17 @@ CHANNEL_ID = '233106056086159363'  # region-assignment
 # Roles
 # Each role group contains roles which are mutually excusive, and contains a
 # mapping from case-insensitive trigger keyword to role id
-regions = {
-    "na east": "233093800506032128",
-    "na central": "233093905141202946",
-    "na west": "233093715231506432",
-    "south america": "233095632297000960",
-    "europe east": "233095260471820288",
-    "europe west": "233095347197444106",
-    "asia east": "233095545852395522",
-    "asia southeast": "233095608179621892",
-    "oceania": "233621433702416385",
-}
+regions = [
+    ('233093800506032128', ['na east', 'east coast']),
+    ('233093905141202946', ['na central', 'midwest']),
+    ('233093715231506432', ['na west', 'west coast']),
+    ('233095632297000960', ['south america', 'brasil']),
+    ('233095260471820288', ['europe east', 'eu east']),
+    ('233095347197444106', ['europe west', 'eu west']),
+    ('233095545852395522', ['asia east', 'japan']),
+    ('233095608179621892', ['asia southeast']),
+    ('233621433702416385', ['oceania', 'australia']),
+]
 roleGroups = [regions]
 rolesById = {}
 
@@ -52,18 +52,26 @@ async def on_message(message):
     foundKeyphrase = False
     print(text)
     for roleGroup in roleGroups:
-        for keyphrase in roleGroup.keys():
-            if text.find(keyphrase) > -1:
-                print('found:', keyphrase)
-                foundKeyphrase = True
-                await reassignRole(
-                    message.author,
-                    roleGroup[keyphrase],
-                    roleGroup.values())
-                break
+        selectedRoleId = findKeyphrase(roleGroup, text)
+        if selectedRoleId is not None:
+            foundKeyphrase = True
+            groupRoleIds = [roleId for roleId, aliases in roleGroup]
+            await reassignRole(
+                message.author,
+                selectedRoleId,
+                groupRoleIds)
 
     reaction = '✅' if foundKeyphrase else '❌'
     await discordClient.add_reaction(message, reaction)
+
+
+def findKeyphrase(roleGroup, text):
+    for roleId, aliases in roleGroup:
+        for keyphrase in aliases:
+            if text.find(keyphrase) > -1:
+                print('found:', keyphrase)
+                return roleId
+    return None
 
 
 async def reassignRole(member, roleId, roleGroupIds):
