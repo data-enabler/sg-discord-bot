@@ -52,11 +52,11 @@ async def on_message(message):
     foundKeyphrase = False
     print(text)
     for roleGroup in roleGroups:
-        selectedRoleId = findKeyphrase(roleGroup, text)
+        selectedRoleId = find_keyphrase(roleGroup, text)
         if selectedRoleId is not None:
             foundKeyphrase = True
             groupRoleIds = [roleId for roleId, aliases in roleGroup]
-            await reassignRole(
+            await reassign_role(
                 message.author,
                 selectedRoleId,
                 groupRoleIds)
@@ -65,7 +65,7 @@ async def on_message(message):
     await discordClient.add_reaction(message, reaction)
 
 
-def findKeyphrase(roleGroup, text):
+def find_keyphrase(roleGroup, text):
     for roleId, aliases in roleGroup:
         for keyphrase in aliases:
             if text.find(keyphrase) > -1:
@@ -74,7 +74,7 @@ def findKeyphrase(roleGroup, text):
     return None
 
 
-async def reassignRole(member, roleId, roleGroupIds):
+async def reassign_role(member, roleId, roleGroupIds):
     roleToAdd = rolesById[roleId]
     rolesToRemove = [rolesById[r] for r in roleGroupIds if r != roleId]
     print('member:', member)
@@ -103,10 +103,10 @@ async def on_ready():
         CHANNEL_ID))
     print('------')
 
-    rolesById = parseRoles(discordClient.get_server(SERVER_ID))
+    rolesById = parse_roles(discordClient.get_server(SERVER_ID))
 
 
-def parseRoles(server):
+def parse_roles(server):
     return {role.id: role for role in server.roles}
 
 
