@@ -1,9 +1,9 @@
 import discord
 import asyncio
 import logging
+import re
 
 logging.basicConfig(level=logging.INFO)
-
 
 # Credentials
 discordToken = open('token').readline().strip()
@@ -25,11 +25,31 @@ regions = [
     ('233095632297000960', ['south america', 'brasil']),
     ('233095260471820288', ['europe east', 'eu east']),
     ('233095347197444106', ['europe west', 'eu west']),
-    ('233095545852395522', ['asia east', 'japan']),
+    ('233095545852395522', ['asia east', 'japan', 'jp', '日本']),
     ('233095608179621892', ['asia southeast']),
     ('233621433702416385', ['oceania', 'australia']),
 ]
-roleGroups = [regions]
+characters = [
+    ('269176765681893376', ['beo', 'beowulf']),
+    ('269176777962684416', ['big', 'big band', 'bb', 'band', 'brass', 'extend']),
+    ('269176664750030849', ['cer', 'cerebella', 'bella']),
+    ('269176793267699712', ['dou', 'double', 'dub', 'bomber']),
+    ('269176828877340672', ['eli', 'eliza']),
+    ('269176883076268033', ['fil', 'filia']),
+    ('269176708525981706', ['fuk', 'fukua']),
+    ('269176815308767242', ['for', 'ms. fortune', 'msf', 'fort']),
+    ('269176844832473088', ['pai', 'painwheel', 'pw']),
+    ('269176945621598208', ['par', 'parasoul', 'para']),
+    ('269176997320589312', ['pea', 'peacock']),
+    ('269177011996459009', ['rob', 'robo-fortune', 'robo']),
+    ('269176751509209088', ['squ', 'squigly', 'squig']),
+    ('269176965590679552', ['val', 'valentine']),
+    (None, ['nobody']),
+]
+roleGroups = [
+    (regions, True),
+    (characters, False),
+]
 rolesById = {}
 
 
@@ -51,37 +71,52 @@ async def on_message(message):
     text = message.content.lower()
     foundKeyphrase = False
     print(text)
-    for roleGroup in roleGroups:
-        selectedRoleId = find_keyphrase(roleGroup, text)
-        if selectedRoleId is not None:
-            foundKeyphrase = True
-            groupRoleIds = [roleId for roleId, aliases in roleGroup]
-            await reassign_role(
-                message.author,
-                selectedRoleId,
-                groupRoleIds)
+    netAdd = set()
+    netRemove = set()
+    for roleGroup, exclusive in roleGroups:
+        selectedRoleIds = find_keyphrase(roleGroup, text)
+        if len(selectedRoleIds) == 0:
+            continue
+        foundKeyphrase = True
+
+        groupRoleIds = set([roleId for roleId, aliases in roleGroup if roleId is not None])
+        rolesToAdd = [r for r in selectedRoleIds if r is not None]
+        rolesToAdd = set(rolesToAdd[:1] if exclusive else rolesToAdd)
+        rolesToRemove = groupRoleIds - rolesToAdd
+
+        netAdd |= rolesToAdd
+        netRemove |= rolesToRemove
+
+    if foundKeyphrase:
+        await reassign_role(
+            message.author,
+            netAdd,
+            netRemove)
 
     reaction = '✅' if foundKeyphrase else '❌'
     await discordClient.add_reaction(message, reaction)
 
 
 def find_keyphrase(roleGroup, text):
+    ids = []
     for roleId, aliases in roleGroup:
         for keyphrase in aliases:
-            if text.find(keyphrase) > -1:
+            if re.search(r'\b' + re.escape(keyphrase) + r'\b', text):
                 print('found:', keyphrase)
-                return roleId
-    return None
+                ids.append(roleId)
+    return ids
 
 
-async def reassign_role(member, roleId, roleGroupIds):
-    roleToAdd = rolesById[roleId]
-    rolesToRemove = [rolesById[r] for r in roleGroupIds if r != roleId]
-    print('member:', member)
-    print('adding:', roleToAdd)
-    print('removing:', [r.name for r in rolesToRemove])
+async def reassign_role(member, rolesToAdd, rolesToRemove):
+    rolesToAdd = [rolesById[r] for r in rolesToAdd]
+    rolesToRemove = [rolesById[r] for r in rolesToRemove]
+
     newRoles = [r for r in member.roles if r not in rolesToRemove]
-    newRoles.append(roleToAdd)
+    newRoles.extend(rolesToAdd)
+
+    print('member:', member)
+    print('adding:', [r.name for r in rolesToAdd])
+    print('removing:', [r.name for r in rolesToRemove])
     print('new roles:', [r.name for r in newRoles])
 
     await discordClient.replace_roles(member, *newRoles)
