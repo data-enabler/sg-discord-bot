@@ -37,7 +37,7 @@ characters = [
     ('269176828877340672', ['eli', 'eliza']),
     ('269176883076268033', ['fil', 'filia']),
     ('269176708525981706', ['fuk', 'fukua']),
-    ('269176815308767242', ['for', 'ms. fortune', 'ms fortune', 'msfortune', 'msf', 'fortune', 'fort']),
+    ('269176815308767242', ['msf', 'ms\. fortune', 'ms fortune', 'msfortune', '(?<!robo( |-))fortune', 'fort']),
     ('269176844832473088', ['pai', 'painwheel', 'pw']),
     ('269176945621598208', ['par', 'parasoul', 'para']),
     ('269176997320589312', ['pea', 'peacock']),
@@ -66,11 +66,13 @@ async def discord_task():
 async def on_message(message):
     if message.channel.id != CHANNEL_ID:
         return
-    print('on_message:')
 
     text = message.content.lower()
+    if text[0:2] == '//':
+        return
+
+    print('on_message:', text)
     foundKeyphrase = False
-    print(text)
     netAdd = set()
     netRemove = set()
     for roleGroup, exclusive in roleGroups:
@@ -101,7 +103,7 @@ def find_keyphrase(roleGroup, text):
     ids = []
     for roleId, aliases in roleGroup:
         for keyphrase in aliases:
-            if re.search(r'\b' + re.escape(keyphrase) + r'\b', text):
+            if re.search(r'\b' + keyphrase + r'\b', text):
                 print('found:', keyphrase)
                 ids.append(roleId)
     return ids
@@ -139,6 +141,8 @@ async def on_ready():
     print('------')
 
     rolesById = parse_roles(discordClient.get_server(SERVER_ID))
+    # for i in rolesById:
+    #     print(i, rolesById[i].name)
 
 
 def parse_roles(server):
