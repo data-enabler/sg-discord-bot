@@ -28,7 +28,7 @@ regions = [
     ('233095545852395522', ['asia east', 'japan', 'jp', '日本']),
     ('233095608179621892', ['asia southeast']),
     ('233621433702416385', ['oceania', 'australia']),
-    ('304317454581104643', ['undeclared', 'nowhere']),
+    ('304317454581104643', ['other', 'undeclared', 'nowhere', 'africa', 'middle east']),
 ]
 characters = [
     ('269176765681893376', ['beo', 'beowulf']),
