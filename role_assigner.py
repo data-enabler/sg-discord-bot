@@ -51,6 +51,9 @@ roleGroups = [
     (regions, True),
     (characters, False),
 ]
+roleSentences = [
+    ('388565602890940416', 'i have read and understand the rules\.?'),
+]
 rolesById = {}
 
 
@@ -89,6 +92,12 @@ async def on_message(message):
 
         netAdd |= rolesToAdd
         netRemove |= rolesToRemove
+
+    for roleId, sentence in roleSentences:
+        if re.search(r'^' + sentence + r'$', text):
+            foundKeyphrase = True
+            netAdd = set([roleId])
+
 
     if foundKeyphrase:
         await reassign_role(
