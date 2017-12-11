@@ -1,17 +1,13 @@
-import discord
-import asyncio
-import logging
 import re
 
-logging.basicConfig(level=logging.INFO)
+import discord
 
-# Credentials
-discordToken = open('token').readline().strip()
+import client
+import roles
 
 
 # Constants
-SERVER_ID = '93912070059196416'  # Skullgirls
-CHANNEL_ID = '233106056086159363'  # region-assignment
+CHANNEL_ID = '233106056086159363'  # role-assignment
 # CHANNEL_ID = '257073315011624961'  # dev-test
 
 
@@ -51,22 +47,14 @@ roleGroups = [
     (regions, True),
     (characters, False),
 ]
-roleSentences = [
-    ('388565602890940416', 'i have read and understand the rules\.?'),
-]
-rolesById = {}
 
 
-# Discord #
-discordClient = discord.Client()
+async def on_ready():
+    print('Listening for role assignment on channel #{0} ({1})'.format(
+        client.discordClient.get_channel(CHANNEL_ID),
+        CHANNEL_ID))
 
 
-async def discord_task():
-    await discordClient.login(discordToken, bot=True)
-    await discordClient.connect()
-
-
-@discordClient.event
 async def on_message(message):
     if message.channel.id != CHANNEL_ID:
         return
@@ -75,7 +63,7 @@ async def on_message(message):
     if text[0:2] == '//':
         return
 
-    print('on_message:', text)
+    print('role-assignment: ', text)
     foundKeyphrase = False
     netAdd = set()
     netRemove = set()
@@ -93,20 +81,14 @@ async def on_message(message):
         netAdd |= rolesToAdd
         netRemove |= rolesToRemove
 
-    for roleId, sentence in roleSentences:
-        if re.search(r'^' + sentence + r'$', text):
-            foundKeyphrase = True
-            netAdd = set([roleId])
-
-
     if foundKeyphrase:
-        await reassign_role(
+        await roles.reassign_roles(
             message.author,
             netAdd,
             netRemove)
 
     reaction = '✅' if foundKeyphrase else '❌'
-    await discordClient.add_reaction(message, reaction)
+    await client.discordClient.add_reaction(message, reaction)
 
 
 def find_keyphrase(roleGroup, text):
@@ -117,58 +99,3 @@ def find_keyphrase(roleGroup, text):
                 print('found:', keyphrase)
                 ids.append(roleId)
     return ids
-
-
-async def reassign_role(member, rolesToAdd, rolesToRemove):
-    rolesToAdd = [rolesById[r] for r in rolesToAdd]
-    rolesToRemove = [rolesById[r] for r in rolesToRemove]
-
-    newRoles = [r for r in member.roles if r not in rolesToRemove]
-    newRoles.extend(rolesToAdd)
-
-    print('member:', member)
-    print('adding:', [r.name for r in rolesToAdd])
-    print('removing:', [r.name for r in rolesToRemove])
-    print('new roles:', [r.name for r in newRoles])
-
-    await discordClient.replace_roles(member, *newRoles)
-
-
-@discordClient.event
-async def on_ready():
-    global rolesById
-
-    print('------')
-    print('User: {0} ({1})'.format(
-        discordClient.user.name,
-        discordClient.user.id))
-    print('Server: {0} ({1})'.format(
-        discordClient.get_server(SERVER_ID),
-        SERVER_ID))
-    print('Channel: {0} ({1})'.format(
-        discordClient.get_channel(CHANNEL_ID),
-        CHANNEL_ID))
-    print('------')
-
-    rolesById = parse_roles(discordClient.get_server(SERVER_ID))
-    # for i in rolesById:
-    #     print(i, rolesById[i].name)
-
-
-def parse_roles(server):
-    return {role.id: role for role in server.roles}
-
-
-def main():
-    loop = asyncio.get_event_loop()
-    try:
-        loop.run_until_complete(discord_task())
-    except:
-        print('Shutting down...')
-        loop.run_until_complete(discordClient.logout())
-    finally:
-        loop.close()
-
-
-if __name__ == '__main__':
-    main()
