@@ -14,7 +14,7 @@ PHRASE_REGEX = r'^I have read and understand the rules\.?$'
 
 
 async def on_ready():
-    print('Listening for rule aceptance on channel #{0} ({1})'.format(
+    print('Listening for rule acceptance on channel #{0} ({1})'.format(
         client.discordClient.get_channel(CHANNEL_ID),
         CHANNEL_ID))
 
