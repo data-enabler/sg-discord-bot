@@ -1,3 +1,5 @@
+import sys
+
 import discord
 
 import client
@@ -16,6 +18,8 @@ async def on_ready():
 def enumerate_roles(server):
     global rolesById
     rolesById = {role.id: role for role in server.roles}
+    if len(rolesById) == 0:
+        sys.exit('Unable to fetch roles, exiting')
     print('Server roles:')
     for i in rolesById:
         print(i, rolesById[i].name)
