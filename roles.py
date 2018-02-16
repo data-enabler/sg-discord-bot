@@ -16,8 +16,9 @@ async def on_ready():
 def enumerate_roles(server):
     global rolesById
     rolesById = {role.id: role for role in server.roles}
-    # for i in rolesById:
-    #     print(i, rolesById[i].name)
+    print('Server roles:')
+    for i in rolesById:
+        print(i, rolesById[i].name)
 
 
 async def reassign_roles(member, rolesToAdd, rolesToRemove):
