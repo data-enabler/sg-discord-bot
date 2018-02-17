@@ -16,13 +16,16 @@ logging.basicConfig(level=logging.INFO)
 
 @client.discordClient.event
 async def on_ready():
-    print('------')
-    print_info()
-    await role_assigner.on_ready()
-    await rules.on_ready()
-    await roles.on_ready()
-    print('------')
-
+    try:
+        print('------')
+        print_info()
+        await role_assigner.on_ready()
+        await rules.on_ready()
+        await roles.on_ready()
+        print('------')
+    except:
+        print("Unexpected error:", sys.exc_info()[0])
+        sys.exit('Exiting')
 
 def print_info():
     print('User: {0} ({1})'.format(
