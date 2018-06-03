@@ -4,7 +4,6 @@ import discord
 
 import client
 import constants
-import roles
 
 
 rolesById = {}
@@ -12,17 +11,18 @@ rolesById = {}
 
 async def on_ready():
     server = client.discordClient.get_server(constants.SERVER_ID)
+    global rolesById
     rolesById = enumerate_roles(server)
 
 
 def enumerate_roles(server):
-    global rolesById
     rolesById = {role.id: role for role in server.roles}
     if len(rolesById) == 0:
         sys.exit('Unable to fetch roles, exiting')
     print('Server roles:')
     for i in rolesById:
         print(i, rolesById[i].name)
+    return rolesById
 
 
 async def reassign_roles(member, rolesToAdd, rolesToRemove):

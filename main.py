@@ -4,6 +4,7 @@ import sys
 
 import discord
 
+import announcements
 import client
 import constants
 import role_assigner
@@ -20,9 +21,10 @@ async def on_ready():
     try:
         print('------')
         print_info()
+        await roles.on_ready()
         await role_assigner.on_ready()
         await rules.on_ready()
-        await roles.on_ready()
+        await announcements.on_ready()
         print('------')
     except:
         print("Unexpected error:", sys.exc_info()[0])
@@ -41,6 +43,7 @@ def print_info():
 async def on_message(message):
     await role_assigner.on_message(message)
     await rules.on_message(message)
+    await announcements.on_message(message)
 
 
 async def discord_task():
