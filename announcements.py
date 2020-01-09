@@ -6,7 +6,8 @@ import discord
 import client
 
 # Constants
-CHANNEL_ID = '387621111812063232'  # admin
+CHANNEL_ID = '664753886631952385'  # molly
+# CHANNEL_ID = '387621111812063232'  # admin
 # CHANNEL_ID = '109424003403247616'  # mod
 # CHANNEL_ID = '257073315011624961'  # dev-test
 ANNOUNCE_REGEX = r'^\/announce\s+<#(\d+)>\s+(.+)$'
