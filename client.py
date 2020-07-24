@@ -1,4 +1,4 @@
 import discord
 
 
-discordClient = discord.Client()
+discordClient: discord.Client = discord.Client()

@@ -7,9 +7,9 @@ import client
 import roles
 
 # Constants
-CHANNEL_ID = '388764554848632842'  # rules
-# CHANNEL_ID = '257073315011624961'  # dev-test
-RULE_ROLE_ID = '388565602890940416'
+CHANNEL_ID = 388764554848632842  # rules
+# CHANNEL_ID = 257073315011624961  # dev-test
+RULE_ROLE_ID = 388565602890940416
 PHRASE_REGEX = r'^I have read and understand the rules\.?$'
 
 
@@ -19,7 +19,7 @@ async def on_ready():
         CHANNEL_ID))
 
 
-async def on_message(message):
+async def on_message(message: discord.Message):
     if message.channel.id != CHANNEL_ID:
         return
 
@@ -35,8 +35,5 @@ async def on_message(message):
             set())
 
     reaction = '✅' if foundKeyphrase else '❌'
-    await client.discordClient.add_reaction(message, reaction)
-
-    time.sleep(1)
-
-    await client.discordClient.delete_message(message)
+    await message.add_reaction(reaction)
+    await message.delete(delay=1)

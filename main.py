@@ -35,12 +35,12 @@ def print_info():
         client.discordClient.user.name,
         client.discordClient.user.id))
     print('Server: {0} ({1})'.format(
-        client.discordClient.get_server(constants.SERVER_ID),
+        client.discordClient.get_guild(constants.SERVER_ID),
         constants.SERVER_ID))
 
 
 @client.discordClient.event
-async def on_message(message):
+async def on_message(message: discord.Message):
     await role_assigner.on_message(message)
     await rules.on_message(message)
     await announcements.on_message(message)
