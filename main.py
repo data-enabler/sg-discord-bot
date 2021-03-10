@@ -10,6 +10,7 @@ import constants
 import role_assigner
 import roles
 import rules
+import votes
 
 
 discordToken = open('token').readline().strip()
@@ -25,6 +26,7 @@ async def on_ready():
         await role_assigner.on_ready()
         await rules.on_ready()
         await announcements.on_ready()
+        await votes.on_ready()
         print('------')
     except:
         print("Unexpected error:", sys.exc_info()[0])
@@ -41,13 +43,16 @@ def print_info():
 
 @client.discordClient.event
 async def on_message(message: discord.Message):
-    await role_assigner.on_message(message)
-    await rules.on_message(message)
-    await announcements.on_message(message)
+    await asyncio.gather(
+        role_assigner.on_message(message),
+        rules.on_message(message),
+        announcements.on_message(message),
+        votes.on_message(message),
+    )
 
 
 async def discord_task():
-    await client.discordClient.login(discordToken, bot=True)
+    await client.discordClient.login(discordToken)
     await client.discordClient.connect()
 
 
