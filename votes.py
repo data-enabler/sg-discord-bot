@@ -26,7 +26,7 @@ async def on_ready():
 
 
 async def on_message(message: discord.Message):
-    if message.channel.id in CHANNEL_IDS:
+    if message.channel.id not in CHANNEL_IDS:
         return
 
     if message.author.id in EXEMPT_USERS:
