@@ -6,6 +6,7 @@ import discord
 
 import announcements
 import client
+import commands
 import constants
 import role_assigner
 import roles
@@ -22,6 +23,7 @@ async def on_ready():
     try:
         print('------')
         print_info()
+        await commands.on_ready()
         await roles.on_ready()
         await role_assigner.on_ready()
         await rules.on_ready()
@@ -62,7 +64,7 @@ def main():
         loop.run_until_complete(discord_task())
     except:
         print('Shutting down...')
-        loop.run_until_complete(client.discordClient.logout())
+        loop.run_until_complete(client.discordClient.close())
     finally:
         loop.close()
 
