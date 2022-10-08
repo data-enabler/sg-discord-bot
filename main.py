@@ -1,73 +1,85 @@
 import asyncio
+from itertools import chain, groupby
 import logging
-import sys
+from typing import Callable, Coroutine, Optional
 
 import discord
+import discord.ext
 
 import announcements
+import action_log
 import client
 import commands
 import constants
-import role_assigner
-import roles
-import rules
-import votes
+import nuclino_api
+# import role_assigner
+# import roles
+# import rules
+# import votes
 
-
-discordToken = open('token').readline().strip()
 logging.basicConfig(level=logging.INFO)
 
+discord_token = open('token').readline().strip()
+nuclino_key = open('nuclino_api_key').readline().strip()
+discord_client = client.init_client(set.union(
+    action_log.intents,
+    announcements.intents,
+    commands.intents,
+))
+nuclino_client = nuclino_api.init_client(nuclino_key)
 
-@client.discordClient.event
+
 async def on_ready():
-    try:
-        print('------')
-        print_info()
-        await commands.on_ready()
-        await roles.on_ready()
-        await role_assigner.on_ready()
-        await rules.on_ready()
-        await announcements.on_ready()
-        await votes.on_ready()
-        print('------')
-    except:
-        print("Unexpected error:", sys.exc_info()[0])
-        sys.exit('Exiting')
-
-def print_info():
+    assert discord_client.user is not None
     print('User: {0} ({1})'.format(
-        client.discordClient.user.name,
-        client.discordClient.user.id))
-    print('Server: {0} ({1})'.format(
-        client.discordClient.get_guild(constants.SERVER_ID),
-        constants.SERVER_ID))
-
-
-@client.discordClient.event
-async def on_message(message: discord.Message):
-    await asyncio.gather(
-        role_assigner.on_message(message),
-        rules.on_message(message),
-        announcements.on_message(message),
-        votes.on_message(message),
+        discord_client.user.name,
+        discord_client.user.id))
+    guild: Optional[discord.Guild] = discord_client.get_guild(
+        constants.SERVER_ID,
     )
+    assert guild is not None
+    print('Server: {0} ({1})'.format(
+        guild.name,
+        guild.id))
 
 
-async def discord_task():
-    await client.discordClient.login(discordToken)
-    await client.discordClient.connect()
+async def on_message(message: discord.Message):
+    await discord_client.process_commands(message)
 
 
-def main():
-    loop = asyncio.get_event_loop()
-    try:
-        loop.run_until_complete(discord_task())
-    except:
-        print('Shutting down...')
-        loop.run_until_complete(client.discordClient.close())
-    finally:
-        loop.close()
+def register_events(handlers: list[set[Callable[..., Coroutine]]]):
+    key_func: Callable[[Callable], str] = lambda f: f.__name__
+    grouped_handlers = groupby(
+        sorted(chain.from_iterable(handlers), key=key_func),
+        key_func,
+    )
+    for event_name, event_handlers in grouped_handlers:
+        discord_client.event(create_handler(event_name, list(event_handlers)))
+
+
+def create_handler(name: str, handlers: list[Callable[..., Coroutine]]):
+    print(name, [h.__qualname__ for h in handlers])
+
+    async def handler_func(*args):
+        await asyncio.gather(
+            *[e(*args) for e in handlers]
+        )
+    handler_func.__name__ = name
+    return handler_func
+
+
+register_events([
+    {on_ready, on_message},
+    action_log.init(discord_client, nuclino_client),
+    announcements.init(discord_client),
+    commands.init(discord_client),
+])
+
+
+async def main():
+    async with discord_client:
+        await discord_client.start(discord_token)
 
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())
