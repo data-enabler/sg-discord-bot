@@ -204,7 +204,7 @@ User ID: {entry.target.id}
             )
         )
     else:
-        thread = guild.get_thread(thread_id)
+        thread = cast(discord.Thread, await guild.fetch_channel(thread_id))
         if thread is None:
             print(f"Unable to find thread with id {thread_id}")
         else:
