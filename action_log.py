@@ -9,19 +9,15 @@ import nuclino.objects
 
 import constants
 from discord_util import (
-    print_user, ModerationLogEntry, assertIsModerationLogEntry
+    ModerationLogEntry,
+    print_user,
+    describe_moderation_action,
 )
 from nuclino_api import create_nuclino_item, find_nuclino_item
 
 # Discord
 CHANNEL_ID = 1019958027807359018  # mod-coordination
 # CHANNEL_ID = 1027785307858407424  # forum-test
-ACTION_PAST_TENSE_MAP = {
-    discord.AuditLogAction.ban: "banned",
-    discord.AuditLogAction.unban: "unbanned",
-    discord.AuditLogAction.kick: "kicked",
-    discord.AuditLogAction.member_update: "timed out",
-}
 
 # Nuclino
 WORKSPACE_ID = "22ddcaf7-2604-41dc-a21a-54d8ea1932a9"  # General
@@ -160,7 +156,7 @@ async def get_audit_event(
     ]
     if len(logs) == 0:
         return None
-    return assertIsModerationLogEntry(logs[0])
+    return ModerationLogEntry.from_audit_log_entry(logs[0])
 
 
 async def log_moderation_event(
@@ -169,9 +165,10 @@ async def log_moderation_event(
     channel: discord.ForumChannel,
     guild: discord.Guild,
 ):
+    action_description = describe_moderation_action(entry)
     print("{user} was {past_tense_action} by {moderator}".format(
         user=print_user(entry.target),
-        past_tense_action=ACTION_PAST_TENSE_MAP[entry.action],
+        past_tense_action=action_description,
         moderator=print_user(entry.user),
     ))
     nuclino_item = await get_or_create_nuclino_item(nuclino_client, entry)
@@ -183,7 +180,7 @@ async def log_moderation_event(
         Reason: {reason}\
         """.format(
             user=f"{target.name}#{target.discriminator}({target.mention})",
-            past_tense_action=ACTION_PAST_TENSE_MAP[entry.action],
+            past_tense_action=action_description,
             reason=entry.reason or "`No reason given`",
             moderator=entry.user.mention if entry.user else "unknown",
         ))
@@ -219,7 +216,6 @@ async def get_or_create_nuclino_item(
     entry: ModerationLogEntry,
 ) -> nuclino.objects.Item:
     target: Union[discord.User, discord.Member] = entry.target
-    action: discord.AuditLogAction = entry.action
     entryDate: datetime.datetime = entry.created_at
     update = textwrap.dedent("""\
         ## Status: {status}
@@ -227,7 +223,7 @@ async def get_or_create_nuclino_item(
         {reason}\\
         ―{moderator} {date}\
         """.format(
-            status=action.name,
+            status=describe_moderation_action(entry),
             reason=entry.reason or "[No reason given]",
             moderator=print_user(entry.user),
             date=entryDate.strftime("%Y/%m/%d"),
